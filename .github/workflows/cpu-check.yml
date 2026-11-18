@@ -1,0 +1,30 @@
+
+name: Java4Shell CPU Compatibility Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cpu-check:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Inspect cloud CPU
+        run: |
+          echo "CPU MODEL:"
+          lscpu | grep "Model name" | head -1
+
+          echo ""
+          echo "REQUIRED CPU FLAGS:"
+          grep -m1 '^flags' /proc/cpuinfo | tr ' ' '\n' | grep -E '^avx512f$|^avx512bw$|^avx512vbmi$|^bmi2$' || true
+
+          echo ""
+          FLAGS=$(grep -m1 '^flags' /proc/cpuinfo)
+
+          for flag in avx512f avx512bw avx512vbmi bmi2; do
+            if [[ " $FLAGS " == *" $flag "* ]]; then
+              echo "[+] $flag PRESENT"
+            else
+              echo "[-] $flag MISSING"
+            fi
+          done
